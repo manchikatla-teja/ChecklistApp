@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Button } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation, useRoute} from '@react-navigation/native';
-import { getFirestore, collection, doc, updateDoc, onSnapshot, addDoc } from '@react-native-firebase/firestore';
 import {firebase} from '../firebaseConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PersonalChecklistItems = () => {
   const navigation = useNavigation();
@@ -12,25 +12,48 @@ const PersonalChecklistItems = () => {
   const [newItem, setNewItem] = useState('');
   const [items, setItems] = useState([]);
 
-//   console.log("params", route.params.checklist);
+  // console.log("params", route.params.checklist);
+  const paramsChecklist = route.params.checklist;
 
   useEffect(() => {
-    // Reference to the 'personalChecklists' collection
-    const checklistsRef = firebase.firestore().collection('personalChecklists');
-    const checklistId = route.params.checklist.id;
-  
-    // Subscribe to changes in a specific document (checklist) within the collection
-    const unsubscribe = checklistsRef.doc(checklistId).onSnapshot((snapshot) => {
-      const checklistData = snapshot.data();
-      if (checklistData) {
-        setChecklist(checklistData);
-        setItems(checklistData.items || []);
+    const fetchChecklist = async () => {
+      try {
+        // Retrieve checklist from AsyncStorage
+        const storedChecklist = await AsyncStorage.getItem('personalChecklists');
+        const parsedChecklist = JSON.parse(storedChecklist) || {};
+        // console.log(paramsChecklist.id);
+        const filteredChecklist = parsedChecklist.filter(item => item.id == paramsChecklist.id);
+        // console.log("inside itemsLIST",filteredChecklist, "inside items", filteredChecklist[0].items);
+        
+        // console.log("RetirevedItems", filteredChecklist[0].items);
+        // console.log("filteredChecklsit",filteredChecklist[0]);
+        setChecklist(filteredChecklist[0]);
+        setItems(filteredChecklist[0].items || []);
+      } catch (error) {
+        console.error('Error fetching checklist:', error);
       }
-    });
-  
-    // Unsubscribe when the component unmounts
-    return () => unsubscribe();
+    };
+
+    fetchChecklist();
   }, [route.params.checklist.id]);
+
+  // useEffect(() => {
+  //   // Reference to the 'personalChecklists' collection
+  //   const checklistsRef = firebase.firestore().collection('personalChecklists');
+  //   const checklistId = route.params.checklist.id;
+  
+  //   // Subscribe to changes in a specific document (checklist) within the collection
+  //   const unsubscribe = checklistsRef.doc(checklistId).onSnapshot((snapshot) => {
+  //     const checklistData = snapshot.data();
+  //     if (checklistData) {
+  //       setChecklist(checklistData);
+  //       setItems(checklistData.items || []);
+  //     }
+  //   });
+  
+  //   // Unsubscribe when the component unmounts
+  //   return () => unsubscribe();
+  // }, [route.params.checklist.id]);
   
 
   const handleAddItem = () => {
@@ -58,44 +81,59 @@ const PersonalChecklistItems = () => {
   };
 
   const handleSave = async () => {
-    // Reference to the 'personalChecklists' collection
-    const checklistsRef = firebase.firestore().collection('personalChecklists');
-    const checklistId = route.params.checklist.id;
-  
     try {
-      // Update the specific document (checklist) within the collection
-      await checklistsRef.doc(checklistId).update({
-        items: items,
-      });
+      // Retrieve the personalChecklists array from AsyncStorage
+      const storedPersonalChecklists = await AsyncStorage.getItem('personalChecklists');
+      const personalChecklists = JSON.parse(storedPersonalChecklists) || [];
+  
+      // Update the checklist with new information based on checklist.id
+
+      // console.log("oldChecklsit", checklist);
+      
+      const updatedChecklists = personalChecklists.filter(item => item.id!=checklist.id);
+      const newChecklist = checklist;
+      newChecklist.items = items;
+      setChecklist(newChecklist);
+      setItems([]);
+
+      // console.log("newChecklist", checklist);
+      // Save the updated personalChecklists array back to AsyncStorage
+      await AsyncStorage.setItem('personalChecklists', JSON.stringify([...updatedChecklists, checklist]));
   
       // Navigate back after successful update
       navigation.goBack();
     } catch (error) {
-      console.error("Error updating document: ", error);
+      console.error('Error updating checklist:', error);
       // Handle the error as needed
     }
   };
+
+  // const handleSave = async () => {
+  //   // Reference to the 'personalChecklists' collection
+  //   const checklistsRef = firebase.firestore().collection('personalChecklists');
+  //   const checklistId = route.params.checklist.id;
+  
+  //   try {
+  //     // Update the specific document (checklist) within the collection
+  //     await checklistsRef.doc(checklistId).update({
+  //       items: items,
+  //     });
+  
+  //     // Navigate back after successful update
+  //     navigation.goBack();
+  //   } catch (error) {
+  //     console.error("Error updating document: ", error);
+  //     // Handle the error as needed
+  //   }
+  // };
   
 
-//   const handleAddChecklist = async () => {
-//     const newChecklist = {
-//       title: 'Your Checklist Title', // You can replace this with the actual checklist title
-//       createdAt: new Date(),
-//       items: [],
-//     };
 
-//     try {
-//       const docRef = await addDoc(collection(getFirestore(), 'personalChecklists'), newChecklist);
-//       navigation.navigate('ChecklistScreen', { checklistId: docRef.id });
-//     } catch (error) {
-//       console.error('Error adding checklist:', error);
-//     }
-//   };
 
   return (
     <View style={{marginBottom: 110}}>
       <Text style={styles.checklistTitle}>{checklist.name}</Text>
-      <Text style={styles.checklistDate}>Created On: {checklist.createdAt?.toDate().toLocaleDateString()}</Text>
+      <Text style={styles.checklistDate}>Created On: {new Date(checklist.createdAt).toLocaleDateString()}</Text>
       
       <View style={styles.addChecklistContainer}>
       <TextInput style={styles.textInput}

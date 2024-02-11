@@ -6,7 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import TabNavigation from './app/TabNavigation/TabNavigation';
 import change from './app/global/global'
 import {firebase} from './app/firebaseConfig'
-// import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDMHMy2iKC01XY9vhTLlewuiFYgpoDSFaQ",
@@ -20,7 +20,10 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+
+
 const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogin, handleAuthentication }) => {
+
   return (
     <View style={styles.authContainer}>
        <Text style={styles.title}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>
@@ -52,19 +55,29 @@ const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogi
   );
 }
 
-// const storeUser = async (userJSON) => {
-//   try {
-//     await AsyncStorage.setItem('user', userJSON);
-//     console.log('User stored successfully in Async Storage!');
-//   } catch (error) {
-//     console.error('Error storing user:', error);
-//   }
-// };
+const storeUser = async (userJSON) => {
+  try {
+    await AsyncStorage.setItem('user', userJSON);
+    console.log('User stored successfully in Async Storage!');
+  } catch (error) {
+    console.error('Error storing user:', error);
+  }
+};
+
+const removeUserFromStorage = async () => {
+  try {
+    // Remove the user information from AsyncStorage
+    await AsyncStorage.removeItem('user');
+    console.log('User removed from AsyncStorage successfully!');
+  } catch (error) {
+    console.error('Error removing user from AsyncStorage:', error);
+  }
+};
 
 const AuthenticatedScreen = ({ user, handleAuthentication }) => {
   change('set', user);
-  // const userJSON = JSON.stringify(user);
-  // storeUser(userJSON);
+  const userJSON = JSON.stringify(user);
+  storeUser(userJSON);
   return (
     <>
     <View style={styles.headerContainer}>
@@ -86,9 +99,37 @@ export default function App() {
   const [isLogin, setIsLogin] = useState(true);
 
   const auth = getAuth(app);
+
+  useEffect(()=>{
+    const getUserFromStorage = async () => {
+      try {
+        // Retrieve the user JSON string from AsyncStorage
+        const userJSON = await AsyncStorage.getItem('user');
+    
+        // If userJSON is not null, parse it into an object
+        if (userJSON) {
+          const user = JSON.parse(userJSON);
+          // console.log('User retrieved successfully:', user);
+          setUser(user);
+          // return user;
+        } else {
+          console.log('No user information found in AsyncStorage.');
+          return null;
+        }
+      } catch (error) {
+        console.error('Error retrieving user from AsyncStorage:', error);
+        return null;
+      }
+    };
+    getUserFromStorage();
+  }, []);
+
+  
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      // console.log("USER HERE: ", user);
         const todoRef = firebase.firestore().collection('users');
         const userExists = todoRef.where('useremail', '==', user.email);
         const userInfo = {userID:user.uid, useremail:user.email};
@@ -127,6 +168,8 @@ export default function App() {
         // If user is already authenticated, log out
         console.log('User logged out successfully!');
         change('set', '');
+        setUser(null);
+        removeUserFromStorage();
         await signOut(auth);
       } else {
         // Sign in or sign up

@@ -10,7 +10,7 @@ const PersonalChecklistBox = ({ checklist, onDelete, onAddItem }) => {
         <FontAwesome name="trash" size={30} color="red" />
       </TouchableOpacity>
       <Text style={styles.title}>{checklist.name}</Text>
-      <Text style={styles.date}>Created On: {checklist.createdAt.toDate().toLocaleDateString()}</Text>
+      <Text style={styles.date}>Created On: {new Date(checklist.createdAt).toLocaleDateString()}</Text>
       {/* <TouchableOpacity onPress={onAddItem} style={styles.addItemButton}>
         <Text style={styles.addItemButtonText}>Add Item</Text>
       </TouchableOpacity> */}
