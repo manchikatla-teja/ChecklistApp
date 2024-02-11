@@ -7,20 +7,20 @@ const SharedChecklistBox = ({ checklist, onDelete, onAddItem }) => {
   const navigation = useNavigation();
 
   return (
-    <View style={styles.container}>
+    <TouchableOpacity onPress={onAddItem} style={styles.container}>
       <TouchableOpacity onPress={() => onDelete(checklist.id)} style={styles.deleteButton}>
-        <FontAwesome name="trash" size={20} color="red" />
+        <FontAwesome name="trash" size={30} color="red" />
       </TouchableOpacity>
       <Text style={styles.title}>{checklist.name}</Text>
       <Text style={styles.date}>{checklist.createdAt.toDate().toLocaleDateString()}</Text>
-      <Text style={styles.title}>Created By {checklist.createdUserEmail}</Text>
-      <TouchableOpacity onPress={onAddItem} style={styles.addItemButton}>
+      <Text style={styles.date}>Created By {checklist.createdUserEmail}</Text>
+      {/* <TouchableOpacity onPress={onAddItem} style={styles.addItemButton}>
         <Text style={styles.addItemButtonText}>Add Item</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       <TouchableOpacity onPress={() => navigation.navigate('ShareWithFriendsPage', {checklist: checklist})} style={styles.addFriendButton}>
-        <Text style={styles.addFriendButtonText}>Add a Friend</Text>
+        <Text style={styles.addFriendButtonText}>Invite a Friend</Text>
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -34,7 +34,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ccc',
   },
   title: {
-    color: '#000'
+    color: '#000',
+    fontSize: 15,
+    fontWeight: 'bold',
   },
   date: {
     fontSize: 12,
@@ -57,9 +59,13 @@ const styles = StyleSheet.create({
   },
   addFriendButton: {
     position: 'absolute',
-    bottom: 0,
+    backgroundColor: '#eee',
+    marginTop: 5,
+    marginRight: 8,
+    top: 0,
     right: 0,
-    padding: 16,
+    padding: 6,
+    elevation: 1,
   },
   addFriendButtonText: {
     color: 'green',

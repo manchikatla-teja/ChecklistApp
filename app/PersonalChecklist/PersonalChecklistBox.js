@@ -3,18 +3,18 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
 const PersonalChecklistBox = ({ checklist, onDelete, onAddItem }) => {
-  // console.log(checklist.name);
+  // console.log(checklist);
   return (
-    <View style={styles.container}>
+    <TouchableOpacity onPress={onAddItem} style={styles.container}>
       <TouchableOpacity onPress={()=>onDelete(checklist.id)} style={styles.deleteButton}>
-        <FontAwesome name="trash" size={20} color="red" />
+        <FontAwesome name="trash" size={30} color="red" />
       </TouchableOpacity>
       <Text style={styles.title}>{checklist.name}</Text>
-      <Text style={styles.date}>{checklist.createdAt.toDate().toLocaleDateString()}</Text>
-      <TouchableOpacity onPress={onAddItem} style={styles.addItemButton}>
+      <Text style={styles.date}>Created On: {checklist.createdAt.toDate().toLocaleDateString()}</Text>
+      {/* <TouchableOpacity onPress={onAddItem} style={styles.addItemButton}>
         <Text style={styles.addItemButtonText}>Add Item</Text>
-      </TouchableOpacity>
-    </View>
+      </TouchableOpacity> */}
+    </TouchableOpacity>
   );
 };
 
@@ -28,7 +28,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ccc',
   },
   title: {
-    color: '#000'
+    color: '#000',
+    fontSize: 15,
+    fontWeight: 'bold',
   },
   date: {
     fontSize: 12,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Button } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation, useRoute} from '@react-navigation/native';
 import { getFirestore, collection, doc, updateDoc, onSnapshot, addDoc } from '@react-native-firebase/firestore';
@@ -93,39 +93,41 @@ const SharedChecklistItems = () => {
 //   };
 
   return (
-    <View>
-      <Text style={{ textAlign: 'center', fontSize: 20 }}>{checklist.name}</Text>
-      <Text style={{ textAlign: 'center', fontSize: 12 }}>{checklist.createdAt?.toDate().toLocaleDateString()}</Text>
-      <Text style={{ textAlign: 'center', fontSize: 20 }}>Created By {checklist.createdUserEmail}</Text>
+    <View style={{marginBottom: 150}}>
+      <Text style={styles.checklistTitle}>{checklist.name}</Text>
+      <Text style={styles.checklistCreator}>Created By {checklist.createdUserEmail}</Text>
+      <Text style={styles.checklistDate}>Created On: {checklist.createdAt?.toDate().toLocaleDateString()}</Text>
       {/* <Text style={{ textAlign: 'center', fontSize: 20 }}>No. of Members: {checklist.allUsersID.length}</Text> */}
-      <TextInput
+      
+      <View style={styles.addChecklistContainer}>
+      <TextInput style={styles.textInput}
         placeholder="Enter checklist item"
         value={newItem}
         onChangeText={setNewItem}
-        style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#ccc' }}
       />
-      <TouchableOpacity onPress={handleAddItem} style={{ padding: 16, backgroundColor: '#3498db' }}>
-        <Text style={{ color: 'white' }}>Add Item</Text>
-      </TouchableOpacity>
+      <Button title="Add Item" onPress={handleAddItem} style={{ backgroundColor: '#3498db' }}>
+        {/* <Text style={{ color: 'white' }}>Add Item</Text> */}
+      </Button>
+      </View>
       <ScrollView>
         {items.map((item, index) => (
           <View key={index} style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#ccc' }}>
             <TouchableOpacity onPress={() => handleToggleStatus(index)} style={{ marginHorizontal: 8 }}>
               {item.status === 1 ? (
-                <FontAwesome name="check-square" size={20} color="green" />
+                <FontAwesome name="check-square" size={25} color="green" />
               ) : (
-                <FontAwesome name="square-o" size={20} color="black" />
+                <FontAwesome name="square-o" size={25} color="black" />
               )}
             </TouchableOpacity>
             <Text style={{ flex: 1, marginLeft:16 }}>{item.name}</Text>
             <TouchableOpacity onPress={() => handleDeleteItem(index)}>
-              <FontAwesome name="trash" size={20} color="red" />
+              <FontAwesome name="trash" size={25} color="red" />
             </TouchableOpacity>
           </View>
         ))}
       </ScrollView>
-      <TouchableOpacity onPress={handleSave} style={{ position: 'absolute', top: 0, right: 0, padding: 16 }}>
-        <Text>Save</Text>
+      <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+      <Text style={{color:'#fff', fontSize: 16, fontWeight: 'bold'}}>Save</Text>
       </TouchableOpacity>
       {/* <TouchableOpacity onPress={handleAddChecklist} style={{ position: 'absolute', top: 0, left: 0, padding: 16 }}>
         <Text>Add Checklist</Text>
@@ -135,3 +137,58 @@ const SharedChecklistItems = () => {
 };
 
 export default SharedChecklistItems;
+
+const styles = StyleSheet.create({
+  checklistTitle: {
+    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 15,
+
+  },
+  checklistDate: {
+    textAlign: 'center',
+    fontSize: 12,
+    marginTop: 3,
+    marginBottom: 5, 
+    color: '#777',
+  },
+  checklistCreator: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#777',
+  },
+  addChecklistContainer: {
+    width: '90%',
+    maxWidth: 400,
+    display:"flex",
+    backgroundColor: '#fff',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    marginTop: 5,
+    marginBottom: 5,
+    marginRight: 16,
+    marginLeft: 16,
+    borderRadius: 8,
+    elevation: 2,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  textInput: {
+    width: '70%',
+    maxWidth: 350,
+    fontSize: 15,
+  },
+  saveButton:{
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    borderRadius: 2,
+    elevation: 3,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#1035ac',
+  }
+});

@@ -6,6 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import TabNavigation from './app/TabNavigation/TabNavigation';
 import change from './app/global/global'
 import {firebase} from './app/firebaseConfig'
+// import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDMHMy2iKC01XY9vhTLlewuiFYgpoDSFaQ",
@@ -51,14 +52,24 @@ const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogi
   );
 }
 
+// const storeUser = async (userJSON) => {
+//   try {
+//     await AsyncStorage.setItem('user', userJSON);
+//     console.log('User stored successfully in Async Storage!');
+//   } catch (error) {
+//     console.error('Error storing user:', error);
+//   }
+// };
 
 const AuthenticatedScreen = ({ user, handleAuthentication }) => {
   change('set', user);
+  // const userJSON = JSON.stringify(user);
+  // storeUser(userJSON);
   return (
     <>
-    <View style={styles.authContainer}>
-      <Text style={styles.title}>Welcome</Text>
-      <Text style={styles.emailText}>{user.email}</Text>
+    <View style={styles.headerContainer}>
+      <Text style={styles.title}>Company</Text>
+      {/* <Text style={styles.emailText}>{user.email}</Text> */}
       <Button title="Logout" onPress={handleAuthentication} color="#e74c3c" />
     </View>
       
@@ -115,6 +126,7 @@ export default function App() {
       if (user) {
         // If user is already authenticated, log out
         console.log('User logged out successfully!');
+        change('set', '');
         await signOut(auth);
       } else {
         // Sign in or sign up
@@ -173,9 +185,9 @@ const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 400,
     backgroundColor: '#fff',
-    padding: 2,
-    marginTop: 4,
-    marginBottom: 4,
+    padding: 18,
+    marginTop: 'auto',
+    marginBottom: 'auto',
     marginRight:16,
     marginLeft: 16,
     borderRadius: 8,
@@ -185,9 +197,27 @@ const styles = StyleSheet.create({
     // justifyContent:'center',
     // alignContent:'space-between'
   },
+  headerContainer: {
+    width: '90%',
+    maxWidth: 400,
+    backgroundColor: '#fff',
+    paddingTop: 6,
+    paddingBottom: 6,
+    paddingLeft: 12,
+    paddingRight: 12,
+    marginTop: 38,
+    marginBottom: 4,
+    marginRight:16,
+    marginLeft: 16,
+    borderRadius: 8,
+    elevation: 1,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent:'space-between',
+    
+  },
   title: {
     fontSize: 24,
-    marginBottom: 16,
     textAlign: 'center',
   },
   input: {

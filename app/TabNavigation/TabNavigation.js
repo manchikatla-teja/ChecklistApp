@@ -15,6 +15,7 @@ import ShareWithFriendsPage from '../SharedChecklist/ShareWithFriends';
 const Tab = createMaterialBottomTabNavigator();
 const PersonalStack = createStackNavigator();
 const SharedStack = createStackNavigator();
+const RequestStack = createStackNavigator();
 
 const PersonalStackScreen = () => {
   return (
@@ -35,12 +36,20 @@ const SharedStackScreen = () => {
   );
 };
 
+const RequestStackScreen = () => {
+  return (
+    <RequestStack.Navigator>
+      <RequestStack.Screen name="Requests" component={RequestsScreen} />
+    </RequestStack.Navigator>
+  );
+};
+
 
 const TabNavigation = () => {
   return (
     <Tab.Navigator
       initialRouteName="PersonalMain"
-      activeColor="#fff"
+      activeColor="purple"
       shifting={true}
     >
       <Tab.Screen
@@ -64,8 +73,8 @@ const TabNavigation = () => {
         }}
       />
       <Tab.Screen
-        name="Requests"
-        component={RequestsScreen}
+        name="RequestsMain"
+        component={RequestStackScreen}
         options={{
           tabBarLabel: 'Requests',
           tabBarIcon: ({ color }) => (

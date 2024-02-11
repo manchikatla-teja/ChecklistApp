@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Button } from 'react-native';
 import {firebase} from '../firebaseConfig';
 import { useRoute } from '@react-navigation/native';
 import change from '../global/global';
@@ -63,22 +63,22 @@ const ShareWithFriendsPage = () => {
 
   const renderUserItem = ({ item }) => (
     !invitedUsers.includes(item.useremail) && !checklist.invitedUsersID.includes(item.userID) && !checklist.allUsersID.includes(item.userID) && (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 }}>
-      <Text>{item.useremail}</Text>
-        <TouchableOpacity onPress={() => handleInvite(item, checklist)}>
-          <Text style={{ color: 'blue' }}>Invite</Text>
-        </TouchableOpacity>
+    <View style={styles.inviteBox}>
+      <Text style={{fontSize: 18, fontWeight:'400'}}>{item.useremail}</Text>
+        <Button title="Invite" onPress={() => handleInvite(item, checklist)}>
+          {/* <Text style={{ color: 'blue' }}>Invite</Text> */}
+        </Button>
     </View>
     )
   );
 
   return (
-    <View>
+    <View style={{marginBottom: 60}}>
       <TextInput
         placeholder="Search for users by email"
         value={searchQuery}
         onChangeText={setSearchQuery}
-        style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#ccc' }}
+        style={styles.textInput}
       />
       <FlatList
         data={users}
@@ -90,3 +90,26 @@ const ShareWithFriendsPage = () => {
 };
 
 export default ShareWithFriendsPage;
+
+const styles = StyleSheet.create({
+
+  textInput: {
+    width: '90%',
+    marginHorizontal: 18,
+    marginVertical: 3,
+    maxWidth: 400,
+    fontSize: 15,
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  inviteBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  }
+});

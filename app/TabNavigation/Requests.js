@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, Button } from 'react-native';
 import {firebase} from '../firebaseConfig';
 import change from '../global/global';
 
@@ -48,6 +48,10 @@ const RequestsScreen = () => {
 
   const handleReject = async (request) => {
     const requestsRef = firebase.firestore().collection('requests');
+    const sharedRef = firebase.firestore().collection('sharedChecklists');
+      sharedRef.doc(request.checklistID).update({
+        invitedUsersID: firebase.firestore.FieldValue.arrayRemove(request.invitationReceivedUserID),
+      });
     requestsRef.doc(request.id).delete()
       .then(() => {})
       .catch((error) => {
@@ -56,20 +60,20 @@ const RequestsScreen = () => {
   };
 
   const renderRequestItem = ({ item }) => (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 }}>
-      <View>
-        <Text>Checklist Name: {item.checklistName}</Text>
-        <Text>Created By: {item.createdBy}</Text>
-        <Text>Invited By: {item.invitedBy}</Text>
-        <Text>Invited On: {item.invitedOn.toDate().toLocaleDateString()}</Text>
+    <View style={styles.container}>
+      <View style={styles.details}>
+        <Text style={styles.title}>Checklist Name: {item.checklistName}</Text>
+        <Text style={styles.date}>Created By: {item.createdBy}</Text>
+        <Text style={styles.date}>Invited By: {item.invitedBy}</Text>
+        <Text style={styles.date}>Invited On: {item.invitedOn.toDate().toLocaleDateString()}</Text>
       </View>
-      <View style={{ flexDirection: 'row' }}>
-        <TouchableOpacity onPress={() => handleAccept(item)}>
-          <Text style={{ color: 'green', marginRight: 10 }}>Accept</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleReject(item)}>
-          <Text style={{ color: 'red' }}>Reject</Text>
-        </TouchableOpacity>
+      <View style={{ flexDirection: 'column', gap: 10,}}>
+        <Button title="Accept" color="green" onPress={() => handleAccept(item)}>
+          {/* <Text style={{ color: 'green', marginBottom: 15 }}>Accept</Text> */}
+        </Button>
+        <Button title="Reject" color="red" onPress={() => handleReject(item)}>
+          {/* <Text style={{ color: 'red' }}>Reject</Text> */}
+        </Button>
       </View>
     </View>
   );
@@ -86,3 +90,31 @@ const RequestsScreen = () => {
 };
 
 export default RequestsScreen;
+
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  details: {
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+    paddingHorizontal: 16,
+  },
+  title: {
+    color: '#000',
+    fontSize: 17,
+    fontWeight: 'bold',
+  },
+  date: {
+    fontSize: 13,
+    color: '#777',
+  },
+});
