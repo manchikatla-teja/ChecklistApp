@@ -7,6 +7,7 @@ import {
 	StyleSheet,
 	ScrollView,
 } from "react-native";
+import auth from '@react-native-firebase/auth';
 import { initializeApp } from "firebase/app";
 import {
 	getAuth,
@@ -20,7 +21,7 @@ import TabNavigation from "./app/TabNavigation/TabNavigation";
 import change from "./app/global/global";
 import { firebase } from "./app/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-// import { GoogleSignin, GoogleSigninButton } from '@react-native-google-signin/google-signin';
+import { GoogleSignin, GoogleSigninButton } from '@react-native-google-signin/google-signin';
 
 const firebaseConfig = {
 	apiKey: "AIzaSyDMHMy2iKC01XY9vhTLlewuiFYgpoDSFaQ",
@@ -44,7 +45,7 @@ const AuthScreen = ({
 	handleAuthentication,
 }) => {
 	return (
-		<View style={styles.authContainer}>
+		<View style={styles.normalauthContainer}>
 			<Text style={styles.title}>{isLogin ? "Sign In" : "Sign Up"}</Text>
 
 			<TextInput
@@ -124,43 +125,24 @@ const AuthenticatedScreen = ({ user, handleAuthentication }) => {
 };
 
 export default function App() {
+	// const [initializing , setInitializing] = useState(true);
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [user, setUser] = useState(null); // Track user authentication state
 	const [isLogin, setIsLogin] = useState(true);
 
-	const auth = getAuth(app);
+	const normalauth = getAuth(app);
 
-	useEffect(() => {
-		const getUserFromStorage = async () => {
-			try {
-				// Retrieve the user JSON string from AsyncStorage
-				const userJSON = await AsyncStorage.getItem("user");
+	GoogleSignin.configure({
+		webClientId: '804516530685-5903u0jmq8si7cig2kbnso385bc3idnr.apps.googleusercontent.com',
+	});
 
-				// If userJSON is not null, parse it into an object
-				if (userJSON) {
-					const user = JSON.parse(userJSON);
-					// console.log('User retrieved successfully:', user);
-					setUser(user);
-					// return user;
-				} else {
-					console.log("No user information found in AsyncStorage.");
-					return null;
-				}
-			} catch (error) {
-				console.error("Error retrieving user from AsyncStorage:", error);
-				return null;
-			}
-		};
-		getUserFromStorage();
-	}, []);
-
-	useEffect(() => {
-		const unsubscribe = onAuthStateChanged(auth, (user) => {
-			setUser(user);
-			// console.log("USER HERE: ", user);
-      
-      if(user){
+	function onAuthStateChanged(user){
+		setUser(user);
+		change("set", user);
+		const userJSON = JSON.stringify(user);
+		storeUser(userJSON);
+	  if(user){
         const todoRef = firebase.firestore().collection("users");
         const userExists = todoRef.where("useremail", "==", user.email);
         const userInfo = { userID: user.uid, useremail: user.email };
@@ -172,80 +154,203 @@ export default function App() {
               todoRef
                 .add(userInfo)
                 .then(() => {
-                  //console.log('User information added successfully');
+                  console.log('User information added successfully');
                 })
                 .catch((err) => {
                   console.error("Error adding user information:", err);
                 });
             } else {
               // User information already exists in the collection
-              //console.log('User information already exists');
+              console.log('User information already exists');
             }
           })
           .catch((err) => {
             console.error("Error checking user information:", err);
           });
       }
+		if(initializing) setInitializing(false);
+	}
 
-		});
+	useEffect(()=>{
+		const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+		return subscriber;
+	}, []);
 
-		return () => unsubscribe();
-	}, [auth]);
-
-	const handleAuthentication = async () => {
-		try {
-			if (user) {
-				// If user is already authenticated, log out
-				console.log("User logged out successfully!");
-				change("set", "");
-				setUser(null);
-				removeUserFromStorage();
-				await signOut(auth);
-			} else {
-				// Sign in or sign up
-				if (isLogin) {
-					// Sign in
-					await signInWithEmailAndPassword(auth, email, password);
-					console.log("User signed in successfully!");
-				} else {
-					// Sign up
-					await createUserWithEmailAndPassword(auth, email, password);
-					console.log("User created successfully!");
-				}
-			}
-		} catch (error) {
-			console.error("Authentication error:", error.message);
+	const onGoogleButtonPress = async () =>{
+		// Check if your device supports Google Play
+		await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+		// Get the users ID token
+		const { idToken } = await GoogleSignin.signIn();
+	  
+		// Create a Google credential with the token
+		const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+	  
+		// Sign-in the user with the credential
+		const user_sign_in = auth().signInWithCredential(googleCredential);
+		user_sign_in.then((user)=>{
+		  console.log(user);
+		}).catch((err)=>console.log(err));
+	  }
+	
+	  const signOut = async()=>{
+		try{
+		  await GoogleSignin.revokeAccess();
+		  await auth().signOut();
+		  setUser(null);
+		  console.log("User logged out successfully!");
+		  change("set", "");
+		  removeUserFromStorage();
+		}catch(error){
+		  console.log(error);
 		}
-	};
+	  }
+	
+	  if(initializing) return null;
 
-	return (
-		<NavigationContainer>
-			{user ? (
-				// Show user's email if user is authenticated
-				<AuthenticatedScreen
-					user={user}
-					handleAuthentication={handleAuthentication}
-				/>
-			) : (
-				// Show sign-in or sign-up form if user is not authenticated
-				<AuthScreen
-					email={email}
-					setEmail={setEmail}
-					password={password}
-					setPassword={setPassword}
-					isLogin={isLogin}
-					setIsLogin={setIsLogin}
-					handleAuthentication={handleAuthentication}
-				/>
-			)}
-		</NavigationContainer>
-	);
+	  if(!user){
+		return(
+		  <View style={styles.container}>
+			<GoogleSigninButton
+			style={{width:300, height: 65, marginTop: 300}}
+			onPress={onGoogleButtonPress}
+			></GoogleSigninButton>
+		  </View>
+		)
+	  }
+	
+	  return (
+		// <View style={styles.container}>
+		//   <Text>Welcome, {user.uid}</Text>
+		//   <Button title='signout' onPress={signOut}></Button>
+		// </View>
+		<>
+		<View style={styles.headerContainer}>
+		<Text style={styles.title}>Company</Text>
+
+		<Button title="Logout" onPress={signOut} color="#e74c3c" />
+	</View>
+
+	<TabNavigation />
+	</>
+	  )
+	
+	
+
+	// useEffect(() => {
+	// 	const getUserFromStorage = async () => {
+	// 		try {
+	// 			// Retrieve the user JSON string from AsyncStorage
+	// 			const userJSON = await AsyncStorage.getItem("user");
+
+	// 			// If userJSON is not null, parse it into an object
+	// 			if (userJSON) {
+	// 				const user = JSON.parse(userJSON);
+	// 				// console.log('User retrieved successfully:', user);
+	// 				setUser(user);
+	// 				// return user;
+	// 			} else {
+	// 				console.log("No user information found in AsyncStorage.");
+	// 				return null;
+	// 			}
+	// 		} catch (error) {
+	// 			console.error("Error retrieving user from AsyncStorage:", error);
+	// 			return null;
+	// 		}
+	// 	};
+	// 	getUserFromStorage();
+	// }, []);
+
+	// useEffect(() => {
+	// 	const unsubscribe = onAuthStateChanged(normalauth, (user) => {
+	// 		setUser(user);
+	// 		// console.log("USER HERE: ", user);
+      
+    //   if(user){
+    //     const todoRef = firebase.firestore().collection("users");
+    //     const userExists = todoRef.where("useremail", "==", user.email);
+    //     const userInfo = { userID: user.uid, useremail: user.email };
+    //     userExists
+    //       .get()
+    //       .then((querySnapshot) => {
+    //         if (querySnapshot.empty) {
+    //           // If no matching documents found, add the user information
+    //           todoRef
+    //             .add(userInfo)
+    //             .then(() => {
+    //               //console.log('User information added successfully');
+    //             })
+    //             .catch((err) => {
+    //               console.error("Error adding user information:", err);
+    //             });
+    //         } else {
+    //           // User information already exists in the collection
+    //           //console.log('User information already exists');
+    //         }
+    //       })
+    //       .catch((err) => {
+    //         console.error("Error checking user information:", err);
+    //       });
+    //   }
+
+	// 	});
+
+	// 	return () => unsubscribe();
+	// }, [normalauth]);
+
+	// const handleAuthentication = async () => {
+	// 	try {
+	// 		if (user) {
+	// 			// If user is already normalauthenticated, log out
+	// 			console.log("User logged out successfully!");
+	// 			change("set", "");
+	// 			setUser(null);
+	// 			removeUserFromStorage();
+	// 			await signOut(normalauth);
+	// 		} else {
+	// 			// Sign in or sign up
+	// 			if (isLogin) {
+	// 				// Sign in
+	// 				await signInWithEmailAndPassword(normalauth, email, password);
+	// 				console.log("User signed in successfully!");
+	// 			} else {
+	// 				// Sign up
+	// 				await createUserWithEmailAndPassword(normalauth, email, password);
+	// 				console.log("User created successfully!");
+	// 			}
+	// 		}
+	// 	} catch (error) {
+	// 		console.error("Authentication error:", error.message);
+	// 	}
+	// };
 
 	// return (
-	//   <NavigationContainer>
-	//     <TabNavigation />
-	//   </NavigationContainer>
+	// 	<NavigationContainer>
+	// 		{user ? (
+	// 			// Show user's email if user is normalauthenticated
+	// 			<AuthenticatedScreen
+	// 				user={user}
+	// 				handleAuthentication={handleAuthentication}
+	// 			/>
+	// 		) : (
+	// 			// Show sign-in or sign-up form if user is not normalauthenticated
+	// 			<AuthScreen
+	// 				email={email}
+	// 				setEmail={setEmail}
+	// 				password={password}
+	// 				setPassword={setPassword}
+	// 				isLogin={isLogin}
+	// 				setIsLogin={setIsLogin}
+	// 				handleAuthentication={handleAuthentication}
+	// 			/>
+	// 		)}
+	// 	</NavigationContainer>
 	// );
+
+	// // return (
+	// //   <NavigationContainer>
+	// //     <TabNavigation />
+	// //   </NavigationContainer>
+	// // );
 }
 const styles = StyleSheet.create({
 	container: {
@@ -255,7 +360,7 @@ const styles = StyleSheet.create({
 		padding: 16,
 		backgroundColor: "#f0f0f0",
 	},
-	authContainer: {
+	normalauthContainer: {
 		width: "90%",
 		maxWidth: 400,
 		backgroundColor: "#fff",
